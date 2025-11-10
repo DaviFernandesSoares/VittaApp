@@ -16,7 +16,17 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from django.conf import settings
+from django.conf.urls.static import static
+from appUsuario.views import cadastro, login
+from appHome.views import home, logout
+from appPerfil.views import criar_ou_editar_perfil, perfil_detalhe
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-]
+    path('cadastro/', cadastro, name='cadastro'),
+    path('login/', login, name='login'),
+    path('', home, name='home'),
+    path('logout/', logout, name='logout'),
+    path('perfil/', criar_ou_editar_perfil, name='criar_ou_editar_perfil'),
+    path('perfil/<int:cod_pp>/', perfil_detalhe, name='perfil_detalhe'),
+]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificar Código</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/verificar_codigo.css' %}">
+</head>
+<body>
+    <div class="logoFundo">
+        <img src="{% static 'img/Logo_Login.png' %}" alt="Logo">
+    </div>
+
+    <div class="wrapper">
+        <div class="form-box">
+            <h2>Verificar Código</h2>
+
+            <!-- Seção para exibir mensagens -->
+            {% if messages %}
+                <div id="erro-code" class="error-message">
+                    {% for message in messages %}
+                        <div>{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <form method="POST">
+                {% csrf_token %}
+                <div class="input-box">
+                    <span class="icon"><ion-icon name="lock-closed-outline"></ion-icon></span>
+                    <input type="text" name="codigo" required placeholder="Digite o código recebido">
+                </div>
+                <button type="submit" class="btn"><b>Verificar</b></button>
+            </form><br>
+            <div class="form-footer">
+                <p><a href="{% url 'login' %}">Voltar para Login</a></p>
+                <p><a href="{% url 'redefinir_senha' %}">Não recebeu o código?</a></p>
+                <a href="{% url 'redefinir_senha' %}" class="voltar-btn">
+                    <ion-icon name="arrow-back-outline"></ion-icon>
+                </a>
+            </div>
+        </div>
+    </div>
+<script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const errorMessage = document.getElementById('erro-code');
+            if (errorMessage && errorMessage.innerText.trim() !== ""){
+                errorMessage.style.display = 'block'
+            }
+        });
+    </script>
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</body>
+</html>

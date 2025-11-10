@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+{% load static %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redefinir Senha</title>
+    <link rel="stylesheet" href="{% static 'css/nova_senha.css' %}">
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById('show-password').addEventListener('change', function () {
+                const passwordField1 = document.getElementById('nova_senha');
+                const passwordField2 = document.getElementById('confirmar_senha');
+                if (this.checked) {
+                    passwordField1.type = 'text'; // Mostra a nova senha
+                    passwordField2.type = 'text'; // Mostra a confirmação da senha
+                } else {
+                    passwordField1.type = 'password'; // Oculta a nova senha
+                    passwordField2.type = 'password'; // Oculta a confirmação da senha
+                }
+            });
+        });
+    </script>
+</head>
+
+<body>
+
+    <div class="logoFundo">
+        <img src="{% static 'img/Logo_Login.png' %}" alt="Logo">
+    </div>
+
+    <div class="wrapper">
+        <div class="form-box">
+            <h2>Nova Senha</h2>
+            {% if messages %}
+                <div class="error-message">
+                    {% for message in messages %}
+                        <div>{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <form method="POST" action="{% url 'nova_senha' email %}">
+                {% csrf_token %}
+                <div class="input-box">
+                    <span class="icon"><ion-icon name="lock-closed-outline"></ion-icon></span>
+                    <input type="password" id="nova_senha" name="nova_senha" placeholder="Digite sua nova senha">
+                </div>
+                <div class="input-box">
+                    <span class="icon"><ion-icon name="lock-closed-outline"></ion-icon></span>
+                    <input type="password" id="confirmar_senha" name="confirmar_senha" placeholder="Confirme sua senha">
+                </div>
+                <div class="check-box">
+                    <input type="checkbox" id="show-password"> Mostrar Senha
+                </div>
+                <button type="submit" class="btn"><b>Redefinir Senha</b></button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

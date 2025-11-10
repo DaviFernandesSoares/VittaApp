@@ -1,0 +1,106 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background: linear-gradient(135deg, #0077b6, #0096c7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+}
+
+.container {
+    width: 100%;
+    max-width: 400px;
+    padding: 1rem;
+}
+
+.card {
+    background: #fff;
+    border-radius: 1rem;
+    padding: 2rem;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+h1 {
+    margin-bottom: 1.5rem;
+    color: #023e8a;
+}
+
+.input-group {
+    margin-bottom: 1rem;
+    text-align: left;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 0.4rem;
+    color: #333;
+    font-weight: 600;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 0.6rem;
+    border: 1px solid #ccc;
+    border-radius: 0.5rem;
+    transition: 0.3s;
+}
+
+.input-group input:focus {
+    border-color: #0096c7;
+    outline: none;
+    box-shadow: 0 0 5px rgba(0,150,199,0.3);
+}
+
+.btn {
+    width: 100%;
+    padding: 0.8rem;
+    background: #0096c7;
+    border: none;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.btn:hover {
+    background: #0077b6;
+}
+
+.mensagem {
+    margin-top: 1rem;
+    font-weight: 600;
+}
+
+.mensagem.sucesso {
+    color: #2a9d8f;
+}
+
+.mensagem.erro {
+    color: #e63946;
+}
+
+.login-link {
+    margin-top: 1.5rem;
+    color: #333;
+}
+
+.login-link a {
+    color: #0096c7;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.login-link a:hover {
+    text-decoration: underline;
+}
