@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'appUsuario',
     'appHome',
     'appPerfil',
+    'appAgenda',
 ]
 
 MIDDLEWARE = [

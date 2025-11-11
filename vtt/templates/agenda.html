@@ -1,0 +1,111 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Agenda</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+  <style>
+    body { background:#f6f7fb; font-family: "Segoe UI", Arial, sans-serif; }
+    .fc { background:#fff; border-radius:12px; padding:12px; box-shadow:0 8px 24px rgba(20,20,50,0.05); }
+    .page { max-width:1100px; margin:28px auto; padding:0 16px; }
+    .topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+    .brand { font-weight:800; color:#4b0082; font-size:20px; }
+    .chip { background:#fff; border-radius:999px; padding:6px 10px; border:1px solid #eee; font-weight:700; color:#4b0082; }
+    #modal { max-width:420px; width:90%; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar">
+      <div class="brand">Vitta App — Agenda</div>
+      <div><a class="chip" href="{% url 'home' %}">Voltar</a></div>
+    </div>
+
+    <div id="calendar"></div>
+  </div>
+
+  <!-- modal -->
+  <div class="modal fade" id="reserveModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" id="modal">
+        <div class="modal-header">
+          <h5 class="modal-title">Reservar horário</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div id="modal-body-content"></div>
+        </div>
+        <div class="modal-footer">
+          <button id="confirmBtn" class="btn btn-primary">Reservar</button>
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const calendarEl = document.getElementById('calendar');
+      const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
+      let selectedEvent = null;
+
+      const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'timeGridWeek',
+        headerToolbar: { left: 'prev,next today', center: 'title', right: 'timeGridWeek,timeGridDay,listWeek' },
+        locale: 'pt-br',
+        events: '{% url "api_slots" %}',
+        eventClick: function(info) {
+          selectedEvent = info.event;
+          const p = info.event.extendedProps;
+          const title = info.event.title;
+          const start = info.event.start.toLocaleString();
+          const end = info.event.end.toLocaleString();
+          const available = p.available;
+          const capacity = p.capacity;
+
+          document.getElementById('modal-body-content').innerHTML = `
+            <p><strong>${title}</strong></p>
+            <p>${start} — ${end}</p>
+            <p>Vagas disponíveis: <strong>${available}</strong> / ${capacity}</p>
+          `;
+          const confirmBtn = document.getElementById('confirmBtn');
+          confirmBtn.disabled = (available <= 0);
+          const modal = new bootstrap.Modal(document.getElementById('reserveModal'));
+          modal.show();
+        }
+      });
+
+      calendar.render();
+
+      document.getElementById('confirmBtn').addEventListener('click', async function() {
+        if (!selectedEvent) return;
+        const slotId = selectedEvent.extendedProps.slot_id;
+        const form = new FormData();
+        form.append('slot_id', slotId);
+
+        const res = await fetch("{% url 'api_create_booking' %}", {
+          method: 'POST',
+          headers: { 'X-CSRFToken': csrf },
+          body: form,
+          credentials: 'same-origin'
+        });
+        const data = await res.json();
+        if (data.ok) {
+          alert('Reserva confirmada!');
+          calendar.refetchEvents();
+          bootstrap.Modal.getInstance(document.getElementById('reserveModal')).hide();
+        } else {
+          alert('Erro: ' + (data.error || 'Não foi possível reservar'));
+          calendar.refetchEvents();
+        }
+      });
+    });
+  </script>
+</body>
+</html>
