@@ -30,6 +30,7 @@ urlpatterns = [
     path('perfil/<int:cod_pp>/', perfil_detalhe, name='perfil_detalhe'),
     path('', include('appAgenda.urls')),
     path('admin/', admin.site.urls),
+    path('', include('appChat.urls')),
 
 
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
