@@ -159,7 +159,7 @@ header.shrink .nav-search { display: block; }
 .row-cards {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 18px;
+    gap: 10px;
 }
 @media (max-width: 1100px) { .row-cards { grid-template-columns: repeat(3, 1fr); } }
 @media (max-width: 820px)  { .row-cards { grid-template-columns: repeat(2, 1fr); } }
@@ -360,3 +360,28 @@ header.shrink .nav-search { display: block; }
     border-radius: 8px;
     border: 1px solid #f0f0f0;
 }
+html, body, p, span, h1, h2, h3, h4, h5, h6 {
+  white-space: normal !important;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
+
+.card-body,
+.profile-main,
+.profile-aside,
+.contact-item,
+.d-flex-card,
+.row-cards > * {
+  min-width: 0;
+}
+
+.break-words,
+.card-body p,
+.descricao,
+.profile-main h2,
+.contact-item {
+  overflow-wrap: anywhere;   /* força quebra em qualquer ponto, moderno */
+  word-break: break-word;    /* fallback, amplamente suportado */
+}
+
+.no-break { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

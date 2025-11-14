@@ -30,6 +30,15 @@ ALLOWED_HOSTS = []
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+CHANNEL_LAYERS = {
+  "default": {
+    "BACKEND": "channels_redis.core.RedisChannelLayer",
+    "CONFIG": {"hosts": [("127.0.0.1", 6379)]},
+  }
+}
+
+
+
 # Application definition
 'appUsuario/migrations/',
 'appPerfil/migrations/',
@@ -44,6 +53,7 @@ INSTALLED_APPS = [
     'appHome',
     'appPerfil',
     'appAgenda',
+    'appChat',
 ]
 
 MIDDLEWARE = [
@@ -129,7 +139,7 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 STATICFILES_DIRS = [
-    BASE_DIR / 'appUsuario' / 'static',
+    BASE_DIR /  'static',
 ]
 
 # Default primary key field type
@@ -147,8 +157,8 @@ EMAIL_USE_TLS = True  # Define o uso de TLS
 EMAIL_USE_SSL = False  # Defina False se usar TLS
 
 # Credenciais de email
-EMAIL_HOST_USER = 'buscapharmatcc@gmail.com'  # Seu email do Gmail
-EMAIL_HOST_PASSWORD = 'mdzj hkwp mvle xzqv'  # Sua senha de app do Gmail
+EMAIL_HOST_USER = 'vittaappcontato@gmail.com'  # Seu email do Gmail
+EMAIL_HOST_PASSWORD = 'iecj atqp vauh wvqu'  # Sua senha de app do Gmail
 
 # Endereço padrão de envio de emails (opcional)
-DEFAULT_FROM_EMAIL = 'buscapharmatcc@gmail.com'
+DEFAULT_FROM_EMAIL = 'vittaappcontato@gmail.com'

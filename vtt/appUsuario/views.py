@@ -45,8 +45,8 @@ def cadastro(request):
 
         send_mail(
             'Cadastrado com Sucesso',
-            f'Bem-vindo(a) ao BuscaPharma, {nome}!\n\nFaça já seus agendamentos.',
-            'buscapharmatcc@gmail.com',
+            f'Bem-vindo(a) ao vitta app, {nome}!\n\nFaça já o agendamento de uma aula.',
+            'vittaappcontato@gmail.com',
             [email],
             fail_silently=False,
         )

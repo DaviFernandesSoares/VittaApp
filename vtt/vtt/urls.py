@@ -21,7 +21,6 @@ from django.conf.urls.static import static
 from appUsuario.views import cadastro, login
 from appHome.views import home, logout
 from appPerfil.views import criar_ou_editar_perfil, perfil_detalhe
-from appAgenda.views import agenda_view
 urlpatterns = [
     path('cadastro/', cadastro, name='cadastro'),
     path('login/', login, name='login'),
@@ -31,7 +30,6 @@ urlpatterns = [
     path('perfil/<int:cod_pp>/', perfil_detalhe, name='perfil_detalhe'),
     path('', include('appAgenda.urls')),
     path('admin/', admin.site.urls),
-    path('agenda/', agenda_view, name='agenda'),
 
 
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -1,25 +1,46 @@
-# appAgenda/models.py
-from django.db import models, transaction
+from django.db import models
 from django.conf import settings
 from django.utils import timezone
-from django.core.exceptions import ValidationError
 
 User = settings.AUTH_USER_MODEL
 
+WEEKDAYS = [
+    (0,'Segunda'),
+    (1,'Terça'),
+    (2,'Quarta'),
+    (3,'Quinta'),
+    (4,'Sexta'),
+    (5,'Sábado'),
+    (6,'Domingo'),
+]
+
+class RecurringSlot(models.Model):
+    tutor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='recurring_slots')
+    title = models.CharField(max_length=150, blank=True)
+    weekday = models.IntegerField(choices=WEEKDAYS)
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    capacity = models.PositiveIntegerField(default=1)
+    active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.get_weekday_display()} {self.start_time}-{self.end_time} ({self.title})"
+
+
 class AvailabilitySlot(models.Model):
     tutor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='availability_slots')
+    recurring = models.ForeignKey(RecurringSlot, null=True, blank=True, on_delete=models.SET_NULL, related_name='occurrences')
     start = models.DateTimeField()
     end = models.DateTimeField()
-    capacity = models.PositiveIntegerField(default=1)  # >1 = turma (várias vagas)
+    capacity = models.PositiveIntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['start']
-        indexes = [models.Index(fields=['tutor', 'start'])]
-
-    def clean(self):
-        if self.end <= self.start:
-            raise ValidationError("End must be after start")
+        indexes = [models.Index(fields=['tutor','start'])]
 
     def confirmed_count(self):
         return self.bookings.filter(status='confirmed').count()
@@ -31,15 +52,15 @@ class AvailabilitySlot(models.Model):
         return self.available_spots() <= 0
 
     def __str__(self):
-        return f"{self.tutor} — {self.start.isoformat()}"
+        return f"{self.tutor} {self.start} - {self.end} (cap={self.capacity})"
+
 
 class Booking(models.Model):
     STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('confirmed', 'Confirmed'),
-        ('cancelled', 'Cancelled'),
+        ('pending','Pending'),
+        ('confirmed','Confirmed'),
+        ('cancelled','Cancelled'),
     ]
-
     student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='bookings')
     slot = models.ForeignKey(AvailabilitySlot, on_delete=models.CASCADE, related_name='bookings')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -47,6 +68,3 @@ class Booking(models.Model):
 
     class Meta:
         ordering = ['-created_at']
-
-    def __str__(self):
-        return f"{self.student} -> {self.slot} ({self.status})"

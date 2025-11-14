@@ -1,41 +1,54 @@
-# appAgenda/views.py
-from django.shortcuts import get_object_or_404, render
-from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseForbidden
-from django.views.decorators.http import require_http_methods
+from django.shortcuts import render, get_object_or_404
+from django.http import JsonResponse, HttpResponseForbidden, HttpResponseBadRequest
 from django.contrib.auth.decorators import login_required
-from django.db import transaction
-from django.core.exceptions import ValidationError
+from django.views.decorators.http import require_http_methods
 from django.utils.dateparse import parse_datetime
+from django.utils import timezone
+from django.db import transaction
 
-from .models import AvailabilitySlot, Booking
+from .models import RecurringSlot, AvailabilitySlot, Booking
+from .forms import RecurringSlotForm, AvailabilitySlotForm
+from .utils import materialize_recurring
+
+@login_required
+def tutor_panel(request):
+    return render(request, 'agenda.html', {})
+
+@login_required
+@require_http_methods(["POST"])
+def create_recurring(request):
+    form = RecurringSlotForm(request.POST)
+    if not form.is_valid():
+        return JsonResponse({'ok': False, 'errors': form.errors}, status=400)
+    rec = form.save(commit=False)
+    rec.tutor = request.user
+    rec.save()
+    # materializar próximas 8 semanas para UX imediato
+    materialize_recurring(rec, weeks=8)
+    return JsonResponse({'ok': True, 'id': rec.pk})
 
 def slots_json(request):
     """
-    Retorna slots compatíveis com FullCalendar.
-    Aceita querystring start, end (ISO datetimes).
+    Retorna AvailabilitySlot como eventos FullCalendar.
+    Aceita ?tutor=<id> e start/end params do FullCalendar.
     """
+    qs = AvailabilitySlot.objects.select_related('tutor','recurring').all()
+    tutor_id = request.GET.get('tutor')
+    if tutor_id:
+        qs = qs.filter(tutor_id=tutor_id)
     start = request.GET.get('start')
     end = request.GET.get('end')
-
-    qs = AvailabilitySlot.objects.select_related('tutor').all()
     if start:
-        try:
-            s = parse_datetime(start)
-            if s:
-                qs = qs.filter(end__gte=s)
-        except Exception:
-            pass
+        s = parse_datetime(start)
+        if s:
+            qs = qs.filter(end__gte=s)
     if end:
-        try:
-            e = parse_datetime(end)
-            if e:
-                qs = qs.filter(start__lte=e)
-        except Exception:
-            pass
-
+        e = parse_datetime(end)
+        if e:
+            qs = qs.filter(start__lte=e)
     events = []
     for slot in qs:
-        title = f"{getattr(slot.tutor, 'get_full_name', None)() or str(slot.tutor)}"
+        title = slot.recurring.title if slot.recurring and slot.recurring.title else (getattr(slot.tutor,'get_full_name',None)() or str(slot.tutor))
         events.append({
             'id': f"slot-{slot.pk}",
             'start': slot.start.isoformat(),
@@ -46,8 +59,9 @@ def slots_json(request):
                 'tutor_id': slot.tutor.pk,
                 'capacity': slot.capacity,
                 'available': slot.available_spots(),
+                'is_recurring': bool(slot.recurring),
             },
-            'color': '#8a4dff' if slot.capacity > 1 else '#4b8cff',
+            'color': '#8a4dff' if slot.capacity>1 else '#4b8cff'
         })
     return JsonResponse(events, safe=False)
 
@@ -56,34 +70,17 @@ def slots_json(request):
 def create_booking(request):
     slot_id = request.POST.get('slot_id')
     if not slot_id:
-        return HttpResponseBadRequest("slot_id required")
-
+        return HttpResponseBadRequest('slot_id required')
     slot = get_object_or_404(AvailabilitySlot, pk=slot_id)
-
-    # Não permitir tutor marcar para si próprio
     if request.user.pk == slot.tutor_id:
-        return HttpResponseForbidden("Tutors cannot book their own slots")
-
+        return HttpResponseForbidden('Tutors cannot book own slots')
+    # proteção contra oversell
     try:
         with transaction.atomic():
             slot_locked = AvailabilitySlot.objects.select_for_update().get(pk=slot.pk)
             if slot_locked.is_full():
-                return JsonResponse({'ok': False, 'error': 'Slot is full'}, status=400)
-
-            booking = Booking.objects.create(
-                student=request.user,
-                slot=slot_locked,
-                status='confirmed'
-            )
+                return JsonResponse({'ok': False, 'error': 'Slot está lotado'}, status=400)
+            booking = Booking.objects.create(student=request.user, slot=slot_locked, status='confirmed')
             return JsonResponse({'ok': True, 'booking_id': booking.pk})
-    except ValidationError as e:
-        return JsonResponse({'ok': False, 'error': str(e)}, status=400)
-    except Exception as e:
-        return JsonResponse({'ok': False, 'error': 'Internal error'}, status=500)
-
-
-
-from django.shortcuts import render
-
-def agenda_view(request):
-    return render(request, 'agenda.html')
+    except Exception:
+        return JsonResponse({'ok': False, 'error': 'Erro interno'}, status=500)
