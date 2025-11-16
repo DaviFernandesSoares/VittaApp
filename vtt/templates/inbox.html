@@ -1,0 +1,46 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Inbox - Mensagens recebidas</title>
+  <link rel="stylesheet" href="{% static 'css/standart.css' %}">
+</head>
+<body>
+  <header id="navbar">
+    <h1>Vitta App</h1>
+    <nav><a href="{% url 'home' %}">Home</a> | <a href="{% url 'appChat:inbox' %}">Inbox</a></nav>
+  </header>
+
+  <main class="container-custom" style="max-width:900px; margin:20px auto;">
+    <h2>Mensagens recebidas</h2>
+
+    {% if conversations %}
+      <ul style="list-style:none; padding:0;">
+        {% for c in conversations %}
+          <li style="padding:10px; border-bottom:1px solid #eee;">
+            <a href="{% url 'appChat:conversation' c.sender.id %}" style="text-decoration:none; color:inherit;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <strong>{{ c.sender.get_full_name|default:c.sender.username }}</strong>
+                  <div style="color:#555; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:560px;">
+                    {{ c.last_message.text|default:c.last_message.content|truncatechars:80 }}
+                  </div>
+                </div>
+                <div style="text-align:right;">
+                  {% if c.unread_count and c.unread_count > 0 %}
+                    <span style="background:#e53935;color:#fff;padding:4px 8px;border-radius:16px;">{{ c.unread_count }}</span>
+                  {% endif %}
+                  <div style="color:#888; font-size:12px;">{{ c.last_message.created_at|date:"d/m/Y H:i" }}</div>
+                </div>
+              </div>
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>Nenhuma mensagem recebida ainda.</p>
+    {% endif %}
+  </main>
+</body>
+</html>

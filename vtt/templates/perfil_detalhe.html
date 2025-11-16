@@ -149,13 +149,15 @@
       </script>
 
     {% else %}
-      <p>Este é o seu perfil — você não pode enviar mensagem para si mesmo.</p>
+      <div style="margin-top:12px;">
+    <a href="{% url 'appChat:inbox' %}" class="btn btn-outline-primary" style="display:inline-block;">Mensagens recebidas</a>
+  </div>
     {% endif %}
   {% else %}
     <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-outline-secondary">Entre para enviar mensagem</a>
   {% endif %}
 </div>
- ,v
+
 
 
     <!-- Rodapé simples com retorno -->
