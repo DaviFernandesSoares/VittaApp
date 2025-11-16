@@ -112,33 +112,20 @@
 
   {% if user.is_authenticated %}
     {% if user != perfil.usuario %}
-      <div class="chat-wrapper" style="max-width:900px; margin-top:12px;">
-        <div class="chat-history" id="chatHistory" style="max-height:360px; overflow-y:auto; border:1px solid #eee; padding:12px; background:#fafafa; border-radius:8px;">
-          {% if messages %}
-            {% for msg in messages %}
-              <div style="margin-bottom:10px; display:flex; flex-direction:column; align-items:{% if msg.sender == user %}flex-end{% else %}flex-start{% endif %};">
-                <div style="background:{% if msg.sender == user %}#e6ffed{% else %}#eef6ff{% endif %}; padding:8px 12px; border-radius:8px; max-width:80%; white-space:pre-wrap;">
-                  <strong style="display:block; font-size:0.9em; color:#333;">
-                    {% if msg.sender == user %}Você{% else %}{{ msg.sender.get_full_name|default:msg.sender.username }}{% endif %}
-                  </strong>
-                  <div style="margin-top:6px; color:#111;">{{ msg.content }}</div>
-                  <small style="display:block; color:#666; margin-top:6px;">{{ msg.created_at|date:"d/m/Y H:i" }}</small>
-                </div>
-              </div>
-            {% endfor %}
-          {% else %}
-            <p style="color:#666;">Nenhuma mensagem ainda. Seja o primeiro a iniciar a conversa.</p>
-          {% endif %}
-        </div>
+      <div id="chatHistory"
+     hx-get="{% url 'appChat:message_history' perfil.usuario.id %}"
+     hx-trigger="load, every 3s"
+     hx-swap="innerHTML">
+  {% include '_history.html' %}
+</div>
 
-        <form method="post" action="{% url 'perfil_detalhe' perfil.id %}" style="margin-top:12px;">
-          {% csrf_token %}
-          <textarea name="content" rows="3" placeholder="Escreva sua mensagem..." style="width:100%; padding:8px; border-radius:6px; border:1px solid #ddd;" required></textarea>
-          <div style="display:flex; gap:8px; margin-top:8px;">
-            <button type="submit" class="btn btn-primary">Enviar</button>
-            <a href="{% url 'home' %}" class="btn btn-link">Voltar</a>
-          </div>
-        </form>
+<form hx-post="{% url 'appChat:send_message' perfil.usuario.id %}"
+      hx-target="#chatHistory"
+      hx-swap="innerHTML" method="post">
+  {% csrf_token %}
+  <textarea name="content" ...></textarea>
+  <button type="submit">Enviar</button>
+</form>
       </div>
 
       <script>
@@ -181,7 +168,7 @@
         }
     });
 </script>
-
+<script src="https://unpkg.com/htmx.org@1.9.2"></script>
 </body>
 </html>
-```
+
