@@ -84,3 +84,4 @@ def create_booking(request):
             return JsonResponse({'ok': True, 'booking_id': booking.pk})
     except Exception:
         return JsonResponse({'ok': False, 'error': 'Erro interno'}, status=500)
+

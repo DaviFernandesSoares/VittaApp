@@ -103,6 +103,60 @@
             </div>
         </aside>
     </div>
+<div style="margin-top:18px;">
+  <h3>Mensagem</h3>
+
+  {% if chat_error %}
+    <div class="error-message" style="color:#a00; margin-bottom:8px;">{{ chat_error }}</div>
+  {% endif %}
+
+  {% if user.is_authenticated %}
+    {% if user != perfil.usuario %}
+      <div class="chat-wrapper" style="max-width:900px; margin-top:12px;">
+        <div class="chat-history" id="chatHistory" style="max-height:360px; overflow-y:auto; border:1px solid #eee; padding:12px; background:#fafafa; border-radius:8px;">
+          {% if messages %}
+            {% for msg in messages %}
+              <div style="margin-bottom:10px; display:flex; flex-direction:column; align-items:{% if msg.sender == user %}flex-end{% else %}flex-start{% endif %};">
+                <div style="background:{% if msg.sender == user %}#e6ffed{% else %}#eef6ff{% endif %}; padding:8px 12px; border-radius:8px; max-width:80%; white-space:pre-wrap;">
+                  <strong style="display:block; font-size:0.9em; color:#333;">
+                    {% if msg.sender == user %}Você{% else %}{{ msg.sender.get_full_name|default:msg.sender.username }}{% endif %}
+                  </strong>
+                  <div style="margin-top:6px; color:#111;">{{ msg.content }}</div>
+                  <small style="display:block; color:#666; margin-top:6px;">{{ msg.created_at|date:"d/m/Y H:i" }}</small>
+                </div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <p style="color:#666;">Nenhuma mensagem ainda. Seja o primeiro a iniciar a conversa.</p>
+          {% endif %}
+        </div>
+
+        <form method="post" action="{% url 'perfil_detalhe' perfil.id %}" style="margin-top:12px;">
+          {% csrf_token %}
+          <textarea name="content" rows="3" placeholder="Escreva sua mensagem..." style="width:100%; padding:8px; border-radius:6px; border:1px solid #ddd;" required></textarea>
+          <div style="display:flex; gap:8px; margin-top:8px;">
+            <button type="submit" class="btn btn-primary">Enviar</button>
+            <a href="{% url 'home' %}" class="btn btn-link">Voltar</a>
+          </div>
+        </form>
+      </div>
+
+      <script>
+        document.addEventListener('DOMContentLoaded', function () {
+          const el = document.getElementById('chatHistory');
+          if (el) el.scrollTop = el.scrollHeight;
+        });
+      </script>
+
+    {% else %}
+      <p>Este é o seu perfil — você não pode enviar mensagem para si mesmo.</p>
+    {% endif %}
+  {% else %}
+    <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-outline-secondary">Entre para enviar mensagem</a>
+  {% endif %}
+</div>
+ ,v
+
 
     <!-- Rodapé simples com retorno -->
     <div style="text-align:center; margin-top:20px; color:#777;">

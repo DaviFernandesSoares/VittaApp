@@ -13,3 +13,4 @@ class BookingAdmin(admin.ModelAdmin):
     list_display = ('student', 'slot', 'status', 'created_at')
     list_filter = ('status',)
     search_fields = ('student__username', 'student__email')
+
