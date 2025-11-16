@@ -1,0 +1,51 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Conversa com {{ other.get_full_name|default:other.username }}</title>
+  <link rel="stylesheet" href="{% static 'css/standart.css' %}">
+</head>
+<body>
+  <header id="navbar">
+    <h1>Vitta App</h1>
+    <nav><a href="{% url 'home' %}">Home</a> | <a href="{% url 'appChat:inbox' %}">Inbox</a></nav>
+  </header>
+
+  <main class="container-custom" style="max-width:900px; margin:20px auto;">
+    <h2>Conversa com {{ other.get_full_name|default:other.username }}</h2>
+
+    <div class="chat-history" id="chatHistory" style="max-height:500px; overflow-y:auto; border:1px solid #eee; padding:12px; background:#fafafa;">
+      {% for msg in messages %}
+        <div style="margin-bottom:10px; display:flex; flex-direction:column; align-items:{% if msg.sender == user %}flex-end{% else %}flex-start{% endif %};">
+          <div style="background:{% if msg.sender == user %}#e6ffed{% else %}#eef6ff{% endif %}; padding:8px 12px; border-radius:8px; max-width:80%; white-space:pre-wrap;">
+            <strong style="display:block; font-size:0.9em; color:#333;">
+              {% if msg.sender == user %}Você{% else %}{{ msg.sender.get_full_name|default:msg.sender.username }}{% endif %}
+            </strong>
+            <div style="margin-top:6px; color:#111;">{{ msg.content }}</div>
+            <small style="display:block; color:#666; margin-top:6px;">{{ msg.created_at|date:"d/m/Y H:i" }}</small>
+          </div>
+        </div>
+      {% empty %}
+        <p>Nenhuma mensagem ainda.</p>
+      {% endfor %}
+    </div>
+
+    <form method="post" style="margin-top:12px;">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <div style="display:flex; gap:8px;">
+        <button type="submit" class="btn btn-primary">Enviar</button>
+        <a href="{% url 'appChat:inbox' %}" class="btn btn-link">Voltar</a>
+      </div>
+    </form>
+  </main>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const el = document.getElementById('chatHistory');
+      if (el) el.scrollTop = el.scrollHeight;
+    });
+  </script>
+</body>
+</html>
