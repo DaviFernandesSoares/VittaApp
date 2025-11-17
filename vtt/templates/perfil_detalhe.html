@@ -1,4 +1,3 @@
-
 {% load static %}
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -6,6 +5,9 @@
     <meta charset="UTF-8">
     <title>{{ perfil.usuario.name }} - {{ perfil.titulo }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- HTMX para auto refresh do chat -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 
     <link rel="stylesheet" href="{% static 'css/standart.css' %}">
 </head>
@@ -27,7 +29,7 @@
     </nav>
 </header>
 
-<!-- Barra de busca principal (mesma lógica) -->
+<!-- Barra de busca principal -->
 <div class="search-bar" id="mainSearch">
     <form method="get" action="{% url 'home' %}">
         <input type="text" name="q" placeholder="🔍 Busque seu profissional" value="{{ request.GET.q|default:'' }}">
@@ -103,57 +105,58 @@
             </div>
         </aside>
     </div>
-<div style="margin-top:18px;">
-  <h3>Mensagem</h3>
 
-  {% if chat_error %}
-    <div class="error-message" style="color:#a00; margin-bottom:8px;">{{ chat_error }}</div>
-  {% endif %}
+    <div style="margin-top:18px;">
+        <h3>Mensagem</h3>
 
-  {% if user.is_authenticated %}
-    {% if user != perfil.usuario %}
-      <div id="chatHistory"
-     hx-get="{% url 'appChat:message_history' perfil.usuario.id %}"
-     hx-trigger="load, every 3s"
-     hx-swap="innerHTML">
-  {% include '_history.html' %}
-</div>
+        {% if chat_error %}
+            <div class="error-message" style="color:#a00; margin-bottom:8px;">{{ chat_error }}</div>
+        {% endif %}
 
-<form hx-post="{% url 'appChat:send_message' perfil.usuario.id %}"
-      hx-target="#chatHistory"
-      hx-swap="innerHTML" method="post">
-  {% csrf_token %}
-  <textarea name="content" ...></textarea>
-  <button type="submit">Enviar</button>
-</form>
-      </div>
+        {% if user.is_authenticated %}
+            {% if user != perfil.usuario %}
 
-      <script>
-        document.addEventListener('DOMContentLoaded', function () {
-          const el = document.getElementById('chatHistory');
-          if (el) el.scrollTop = el.scrollHeight;
-        });
-      </script>
+                <div class="chat-wrapper" style="max-width:900px; margin-top:12px;">
 
-    {% else %}
-      <div style="margin-top:12px;">
-    <a href="{% url 'appChat:inbox' %}" class="btn btn-outline-primary" style="display:inline-block;">Mensagens recebidas</a>
-  </div>
-    {% endif %}
-  {% else %}
-    <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-outline-secondary">Entre para enviar mensagem</a>
-  {% endif %}
-</div>
+                    <!-- HISTÓRICO COM AUTO-REFRESH HTMX -->
+                    <div
+                        id="chatHistory"
+                        class="chat-history"
+                        style="max-height:360px; overflow-y:auto; border:1px solid #eee; padding:12px; background:#fafafa; border-radius:8px;"
+                        hx-get="{% url 'appChat:message_history' perfil.usuario.id %}"
+                        hx-trigger="every 1s"
+                        hx-swap="innerHTML"
+                    >
+                        {% include "_history.html" %}
+                    </div>
 
+                    <!-- FORMULÁRIO DE ENVIO -->
+                    <form method="post" action="{% url 'perfil_detalhe' perfil.id %}" style="margin-top:12px;">
+                        {% csrf_token %}
+                        <textarea name="content" rows="3" placeholder="Escreva sua mensagem..." style="width:100%; padding:8px; border-radius:6px; border:1px solid #ddd;" required></textarea>
+                        <div style="display:flex; gap:8px; margin-top:8px;">
+                            <button type="submit" class="btn btn-primary">Enviar</button>
+                            <a href="{% url 'home' %}" class="btn btn-link">Voltar</a>
+                        </div>
+                    </form>
+                </div>
 
+            {% else %}
+                <p>Este é o seu perfil — você não pode enviar mensagem para si mesmo.</p>
+            {% endif %}
+        {% else %}
+            <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-outline-secondary">Entre para enviar mensagem</a>
+        {% endif %}
+    </div>
 
-    <!-- Rodapé simples com retorno -->
     <div style="text-align:center; margin-top:20px; color:#777;">
         <small>Voltar para <a href="{% url 'home' %}">lista de profissionais</a></small>
     </div>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
     const navbar = document.getElementById('navbar');
     const searchBar = document.getElementById('mainSearch');
@@ -168,7 +171,6 @@
         }
     });
 </script>
-<script src="https://unpkg.com/htmx.org@1.9.2"></script>
+
 </body>
 </html>
-
