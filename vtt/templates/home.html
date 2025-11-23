@@ -11,19 +11,27 @@
 <body>
 
 <header id="navbar">
-    <h1>Vitta App</h1>
-    <nav>
-        <a href="{% url 'home' %}">Home</a>
-        {% if not user.is_authenticated %}
-            <a href="{% url 'cadastro' %}">Cadastro</a>
-            <a href="{% url 'login' %}">Login</a>
+    <h1> <a style="color: rgba(255,255,255,0.95);text-decoration: none; " href="{% url 'home' %}" >Vitta App</a></h1>
+     <nav>
+    {% if not user.is_authenticated %}
+        <a href="{% url 'cadastro' %}">Cadastro</a>
+        <a href="{% url 'login' %}">Login</a>
+    {% else %}
+        <a href="{% url 'appChat:inbox' %}">Mensagens</a>
+
+        {% if not user.tem_perfil_profissional %}
+            <a href="{% url 'criar_ou_editar_perfil' %}">Criar Perfil Profissional</a>
         {% else %}
-            <a href="{% url 'logout' %}">Sair</a>
+            <a href="{% url 'criar_ou_editar_perfil' %}">Gerenciar Perfil Profissional</a>
         {% endif %}
-        <div class="nav-search">
-            <input type="text" placeholder="🔍 Buscar profissional...">
-        </div>
-    </nav>
+
+        <a href="{% url 'logout' %}">Sair</a>
+    {% endif %}
+
+    <div class="nav-search">
+        <input type="text" placeholder="🔍 Buscar profissional...">
+    </div>
+</nav>
 </header>
 
 <!-- Barra de busca principal (mesma lógica) -->
@@ -125,4 +133,4 @@
 
 </body>
 </html>
-```
+

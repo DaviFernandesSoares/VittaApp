@@ -21,15 +21,18 @@ from django.conf.urls.static import static
 from appUsuario.views import cadastro, login
 from appHome.views import home, logout
 from appPerfil.views import criar_ou_editar_perfil, perfil_detalhe
+from appChat.views import conversation
 urlpatterns = [
     path('cadastro/', cadastro, name='cadastro'),
     path('login/', login, name='login'),
     path('', home, name='home'),
+    path('home/', home, name='home'),
     path('logout/', logout, name='logout'),
     path('perfil/', criar_ou_editar_perfil, name='criar_ou_editar_perfil'),
     path('perfil/<int:cod_pp>/', perfil_detalhe, name='perfil_detalhe'),
     path('', include('appAgenda.urls')),
     path('admin/', admin.site.urls),
+    path('conversation/<int:user_id>/', conversation, name='conversation'),
     path('', include('appChat.urls')),
 
 

@@ -30,35 +30,50 @@ def verificar_existencia(request):
 
 def cadastro(request):
     if request.method == 'POST':
-        nome = request.POST.get('username')
-        email = request.POST.get('email', '').lower()
-        senha = request.POST.get('password')
+        nome = request.POST.get('full_name', '').strip()
+        email = request.POST.get('email', '').lower().strip()
+        senha = request.POST.get('password', '')
+
+        # validações
+        if not nome:
+            return HttpResponse('<p class="mensagem erro">Informe seu nome completo.</p>')
 
         if Usuario.objects.filter(email=email).exists():
-            if request.htmx:
-                return HttpResponse('<p class="mensagem erro">E-mail já cadastrado.</p>')
-            return render(request, 'cadastro.html', {'erro': 'E-mail já cadastrado.'})
+            return HttpResponse('<p class="mensagem erro">E-mail já cadastrado.</p>')
 
+        # cria usuário
         user = Usuario(username=email, email=email, name=nome)
         user.set_password(senha)
         user.save()
 
+        # envia email
         send_mail(
             'Cadastrado com Sucesso',
-            f'Bem-vindo(a) ao vitta app, {nome}!\n\nFaça já o agendamento de uma aula.',
+            f'Bem-vindo(a) ao Vitta App, {nome}!\n\nFaça já seu primeiro agendamento!',
             'vittaappcontato@gmail.com',
             [email],
-            fail_silently=False,
+            fail_silently=True,
         )
 
-        auth_login(request, user)
-
+        # resposta HTMX com redirecionamento
         if request.htmx:
-            return HttpResponse('<p class="mensagem sucesso">Cadastro realizado com sucesso! Redirecionando...</p><script>setTimeout(()=>window.location.href="/",1500)</script>')
+            return HttpResponse(
+                """
+                <p class="mensagem sucesso">Cadastro realizado com sucesso! Redirecionando para o login...</p>
+                <script>
+                    setTimeout(() => {
+                        window.location.href = "/login/";
+                    }, 1500);
+                </script>
+                """
+            )
 
-        return redirect('home')
+        # fallback — caso não seja HTMX
+        return redirect('login')
 
     return render(request, 'cadastro.html')
+
+
 
 def login(request):
     if request.user.is_authenticated:

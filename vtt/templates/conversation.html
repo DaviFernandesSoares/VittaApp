@@ -2,56 +2,61 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8">
-  <title>Conversa</title>
-  <link rel="stylesheet" href="{% static 'css/standart.css' %}">
+    <meta charset="utf-8">
+    <title>Conversa — Vitta App</title>
+    <link rel="stylesheet" href="{% static 'css/standart.css' %}">
 </head>
+
 <body>
 
 <header id="navbar">
-  <h1>Vitta App</h1>
-  <nav>
-    <a href="{% url 'home' %}">Home</a> |
-    <a href="{% url 'appChat:inbox' %}">Inbox</a>
-  </nav>
+    <h1>
+        <a href="{% url 'home' %}" class="nav-title-link">Vitta App</a>
+    </h1>
+
+    <nav>
+        <a href="{% url 'appChat:inbox' %}">Inbox</a>
+    </nav>
 </header>
 
-<main class="container-custom" style="max-width:900px; margin:20px auto;">
-  <h2>Conversa com {{ other.get_full_name|default:other.username }}</h2>
+<main class="page-container">
+    <div class="card chat-card">
+        <h2 class="chat-title">
+            Conversa com {{ other.get_full_name|default:other.username }}
+        </h2>
 
-  <!-- 🔥 DIV QUE ATUALIZA AUTOMATICAMENTE -->
-  <div id="chat-history"
-       hx-get="{% url 'appChat:message_history' other.id %}"
-       hx-trigger="every 1s"
-       hx-target="#chat-history"
-       hx-swap="innerHTML">
+        <!-- CHAT (auto-refresh HTMX) -->
+        <div id="chat-history"
+             class="chat-history"
+             hx-get="{% url 'appChat:message_history' other.id %}"
+             hx-trigger="every 1s"
+             hx-target="#chat-history"
+             hx-swap="innerHTML">
+            {% include "_history.html" %}
+        </div>
 
-      {% include "_history.html" %}
-  </div>
-  <!-- FIM DO AUTO-REFRESH -->
+        <!-- FORMULÁRIO -->
+        <form method="post" class="chat-form">
+            {% csrf_token %}
+            {{ form.as_p }}
 
-  <form method="post" style="margin-top:12px;">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <div style="display:flex; gap:8px;">
-      <button type="submit" class="btn btn-primary">Enviar</button>
-      <a href="{% url 'appChat:inbox' %}" class="btn btn-link">Voltar</a>
+            <div class="chat-form-actions">
+                <button type="submit" class="btn btn-primary">Enviar</button>
+                <a href="{% url 'appChat:inbox' %}" class="btn btn-link">Voltar</a>
+            </div>
+        </form>
     </div>
-  </form>
-
 </main>
 
-<!-- HTMX + auto-scroll -->
 <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 
 <script>
-  // toda vez que o conteúdo do chat atualizar, desce até o final
-  document.body.addEventListener('htmx:afterSwap', function(evt) {
+document.body.addEventListener('htmx:afterSwap', function (evt) {
     if (evt.detail.target.id === "chat-history") {
-      const el = document.getElementById("chat-history");
-      el.scrollTop = el.scrollHeight;
+        const el = document.getElementById("chat-history");
+        el.scrollTop = el.scrollHeight;
     }
-  });
+});
 </script>
 
 </body>

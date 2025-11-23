@@ -58,26 +58,38 @@ def perfil_detalhe(request, cod_pp):
 
 @login_required
 def criar_ou_editar_perfil(request):
-    perfil, _ = PerfilProfissional.objects.get_or_create(usuario=request.user)
+
+    # 1 - tenta buscar perfil; NÃO cria!
+    try:
+        perfil = PerfilProfissional.objects.get(usuario=request.user)
+    except PerfilProfissional.DoesNotExist:
+        perfil = None
 
     if request.method == 'POST':
+
+        # 2 - se não existe perfil, cria agora (momentum certo)
+        if perfil is None:
+            perfil = PerfilProfissional(usuario=request.user)
+
         form_perfil = PerfilProfissionalForm(request.POST, instance=perfil)
         form_imagem = ImagemPerfilForm(request.POST, request.FILES)
 
         if form_perfil.is_valid():
-            form_perfil.save()
+            perfil = form_perfil.save()
 
             # Upload de múltiplas imagens
             imagens = request.FILES.getlist('imagem')
             for i, img in enumerate(imagens):
                 ImagemPerfil.objects.create(perfil=perfil, imagem=img, ordem=i)
 
-            return redirect('home')  # pode mudar depois para o perfil público
+            return redirect('home')
+
     else:
+        # GET — não cria nada
         form_perfil = PerfilProfissionalForm(instance=perfil)
         form_imagem = ImagemPerfilForm()
 
-    imagens_existentes = perfil.imagens.all()
+    imagens_existentes = perfil.imagens.all() if perfil else []
 
     return render(request, 'perfil_profissional_form.html', {
         'form_perfil': form_perfil,

@@ -3,74 +3,325 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Meu Perfil Profissional</title>
+    <title>Meu Perfil Profissional — Formulário Multi-Etapas</title>
+    <link rel="stylesheet" href="{% static 'css/standart.css' %}">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f9f9f9;
-            padding: 30px;
-        }
-        form {
-            background: #fff;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            max-width: 600px;
-            margin: auto;
-        }
-        input, textarea, select {
-            width: 100%;
-            margin-bottom: 12px;
-            padding: 8px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-        }
-        button {
-            background: #0984e3;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-        button:hover {
-            background: #74b9ff;
-        }
-        .preview {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 15px;
-        }
-        .preview img {
-            width: 100px;
-            height: 100px;
-            object-fit: cover;
-            border-radius: 8px;
+        /* Layout baseado no seu HTML original */
+        body{font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; background:#f6f7fb; color:#1f2937; margin:0}
+        .page-container{max-width:1100px;margin:28px auto;padding:0 16px}
+        .profile-card{display:grid;grid-template-columns:1fr 320px;gap:24px}
+        .profile-main{background:white;padding:24px;border-radius:12px;box-shadow:var(--shadow-md,0 8px 24px rgba(16,24,40,0.06))}
+        .profile-aside{background:white;padding:20px;border-radius:12px;height:fit-content}
+
+        /* Steps */
+        .step{display:none}
+        .step.active{display:block}
+        .step-nav{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+        .step-nav button{background:transparent;border:1px solid #e6e9ef;padding:8px 12px;border-radius:10px;cursor:pointer}
+        .step-nav button.active{background:#4b0082;color:white;border-color:#4b0082}
+
+        /* Form fields sizing (baseado no tamanho das caixas do seu HTML original) */
+        .form-field{margin-bottom:14px;display:flex;flex-direction:column;max-width:760px}
+        .form-field label{font-weight:600;margin-bottom:6px;font-size:0.95rem}
+        .form-field input[type="text"],
+        .form-field input[type="number"],
+        .form-field input[type="email"],
+        .form-field textarea,
+        .form-field select{width:100%;padding:12px;border-radius:10px;border:1px solid #e6e9ef;background:#fff;font-size:0.95rem}
+
+        /* Alturas e larguras específicas pedidas */
+        /* título: caixa curta */
+        .field-title input{height:44px;max-width:420px}
+        /* descrição: caixa alta */
+        .field-description textarea{min-height:160px;max-width:760px}
+        /* área de atuação: pode ser select ou tags */
+        .field-area select{height:44px;max-width:420px}
+        /* endereço: caixa média */
+        .field-address input{height:44px;max-width:720px}
+        /* valor da sessão: caixa curta */
+        .field-price input{height:44px;width:200px}
+
+        .book-btn{background:#4b0082;color:white;padding:10px 16px;border-radius:10px;border:none;cursor:pointer}
+        .empty{color:#6b7280;padding:12px}
+        .gallery img{max-width:140px;border-radius:8px;margin-right:8px}
+
+        @media(max-width:900px){
+            .profile-card{grid-template-columns:1fr;}
+            .profile-aside{order:2}
         }
     </style>
+
 </head>
 <body>
-    <h1>Meu Perfil Profissional</h1>
+<header id="navbar">
+    <h1>
+        <a style="color: rgba(255,255,255,0.95); text-decoration: none;"
+            href="{% url 'home' %}">
+            Vitta App
+        </a>
+    </h1>
 
-    <form method="POST" enctype="multipart/form-data">
-        {% csrf_token %}
+    <nav>
+    {% if not user.is_authenticated %}
+        <a href="{% url 'cadastro' %}">Cadastro</a>
+        <a href="{% url 'login' %}">Login</a>
+    {% else %}
+        <a href="{% url 'appChat:inbox' %}">Mensagens</a>
 
-        <h3>Informações do Perfil</h3>
-        {{ form_perfil.as_p }}
+        {% if not user.tem_perfil_profissional %}
+            <a href="{% url 'criar_ou_editar_perfil' %}">Criar Perfil Profissional</a>
+        {% else %}
+            <a href="{% url 'criar_ou_editar_perfil' %}">Gerenciar Perfil Profissional</a>
+        {% endif %}
 
-        <h3>Fotos</h3>
-        {{ form_imagem.as_p }}
-
-        <button type="submit">Salvar</button>
-    </form>
-
-    {% if imagens %}
-        <div class="preview">
-            {% for img in imagens %}
-                <img src="{{ img.imagem.url }}" alt="Imagem do perfil">
-            {% endfor %}
-        </div>
+        <a href="{% url 'logout' %}">Sair</a>
     {% endif %}
+
+    <div class="nav-search">
+        <input type="text" placeholder="🔍 Buscar profissional...">
+    </div>
+</nav>
+</header>
+
+
+<div class="page-container">
+    <div class="profile-card">
+
+        <div class="profile-main">
+            <h2>Meu Perfil Profissional</h2>
+            <p class="sub">Gerencie suas informações em múltiplas etapas</p>
+
+            <form method="POST" enctype="multipart/form-data" id="multiForm">
+                {% csrf_token %}
+
+                <!-- Navegação de etapas -->
+                <div class="step-nav" id="stepNav">
+                    <button type="button" class="nav-btn active" data-step="0">1. Informações</button>
+                    <button type="button" class="nav-btn" data-step="1">2. Área de Atuação</button>
+                    <button type="button" class="nav-btn" data-step="2">3. Título</button>
+                    <button type="button" class="nav-btn" data-step="3">4. Descrição</button>
+                    <button type="button" class="nav-btn" data-step="4">5. Fotos</button>
+                    <button type="button" class="nav-btn" data-step="5">6. Endereço & Valor</button>
+                    <button type="button" class="nav-btn" data-step="6">7. Revisar</button>
+                </div>
+
+                <!-- Etapa 0: Informações gerais (mantém seu form_perfil original como backup) -->
+                <div class="step active" id="step0">
+                    <h3 class="section-title">Informações Gerais</h3>
+                    <div class="form-field">
+                        <!-- Use os campos que já tiver em form_perfil, mas aqui você pode escolher quais mostrar -->
+                        {{ form_perfil.nome.label_tag }}
+                        {{ form_perfil.nome }}
+                    </div>
+                    <div class="form-field">
+                        {{ form_perfil.email.label_tag }}
+                        {{ form_perfil.email }}
+                    </div>
+                    <div>
+                        <button type="button" class="book-btn" onclick="gotoStep(1)">Próximo</button>
+                    </div>
+                </div>
+
+                <!-- Etapa 1: Área de Atuação -->
+                <div class="step" id="step1">
+                    <h3 class="section-title">Área de Atuação</h3>
+                    <div class="form-field field-area">
+                        <label for="id_area_atuacao">Área de Atuação</label>
+                        <!-- se você já tiver um campo no form_perfil, use-o; senão, mostramos um select como exemplo -->
+                        {% if form_perfil.area_atuacao %}
+                            {{ form_perfil.area_atuacao }}
+                        {% else %}
+                            <select id="id_area_atuacao" name="area_atuacao">
+                                <option value="psicologia">Psicologia</option>
+                                <option value="fisioterapia">Fisioterapia</option>
+                                <option value="nutricao">Nutrição</option>
+                                <option value="outro">Outro</option>
+                            </select>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <button type="button" onclick="gotoStep(0)">Voltar</button>
+                        <button type="button" class="book-btn" onclick="gotoStep(2)">Próximo</button>
+                    </div>
+                </div>
+
+                <!-- Etapa 2: Título Profissional -->
+                <div class="step" id="step2">
+                    <h3 class="section-title">Título Profissional</h3>
+                    <div class="form-field field-title">
+                        <label for="id_titulo">Título</label>
+                        {% if form_perfil.titulo %}
+                            {{ form_perfil.titulo }}
+                        {% else %}
+                            <input type="text" id="id_titulo" name="titulo" placeholder="Ex: Psicólogo Clínico — CRP 0/00000">
+                        {% endif %}
+                    </div>
+                    <div>
+                        <button type="button" onclick="gotoStep(1)">Voltar</button>
+                        <button type="button" class="book-btn" onclick="gotoStep(3)">Próximo</button>
+                    </div>
+                </div>
+
+                <!-- Etapa 3: Descrição -->
+                <div class="step" id="step3">
+                    <h3 class="section-title">Descrição</h3>
+                    <div class="form-field field-description">
+                        <label for="id_descricao">Descrição Profissional</label>
+                        {% if form_perfil.descricao %}
+                            {{ form_perfil.descricao }}
+                        {% else %}
+                            <textarea id="id_descricao" name="descricao" placeholder="Fale sobre sua experiência, abordagem e público-alvo"></textarea>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <button type="button" onclick="gotoStep(2)">Voltar</button>
+                        <button type="button" class="book-btn" onclick="gotoStep(4)">Próximo</button>
+                    </div>
+                </div>
+
+                <!-- Etapa 4: Fotos (mantemos seu form_imagem) -->
+                <div class="step" id="step4">
+                    <h3 class="section-title">Fotos</h3>
+                    <div class="form-field">
+                        {{ form_imagem.as_p }}
+                    </div>
+                    <div>
+                        <button type="button" onclick="gotoStep(3)">Voltar</button>
+                        <button type="button" class="book-btn" onclick="gotoStep(5)">Próximo</button>
+                    </div>
+                </div>
+
+                <!-- Etapa 5: Endereço e Valor da Sessão -->
+                <div class="step" id="step5">
+                    <h3 class="section-title">Endereço & Valor da Sessão</h3>
+                    <div class="form-field field-address">
+                        <label for="id_endereco">Endereço (local de atendimento)</label>
+                        {% if form_perfil.endereco %}
+                            {{ form_perfil.endereco }}
+                        {% else %}
+                          <input type="text" id="id_endereco" name="endereco" placeholder="Rua, número, bairro — Cidade/UF">
+                        {% endif %}
+                    </div>
+                    <div class="form-field field-price">
+                        <label for="id_valor">Valor da Sessão (R$)</label>
+                        {% if form_perfil.valor_sessao %}
+                            {{ form_perfil.valor_sessao }}
+                        {% else %}
+                            <input type="number" id="id_valor" name="valor_sessao" step="0.01" placeholder="Ex: 150.00">
+                        {% endif %}
+                    </div>
+                    <div>
+                        <button type="button" onclick="gotoStep(4)">Voltar</button>
+                        <button type="button" class="book-btn" onclick="gotoStep(6)">Próximo</button>
+                    </div>
+                </div>
+
+                <!-- Etapa 6: Revisar e Salvar -->
+                <div class="step" id="step6">
+                    <h3 class="section-title">Revisar Informações</h3>
+                    <p class="sub">Confira os dados antes de salvar. (Aqui você pode renderizar um resumo usando os valores enviados ou os campos do form.)</p>
+
+                    <!-- Exemplo de resumo estático; ideal: preencher via JS lendo os campos reais -->
+                    <div class="form-field">
+                        <strong>Nome:</strong> <span id="preview_nome">{{ form_perfil.nome.value }}</span>
+                    </div>
+                    <div class="form-field">
+                        <strong>Área:</strong> <span id="preview_area">{{ form_perfil.area_atuacao.value }}</span>
+                    </div>
+                    <div class="form-field">
+                        <strong>Título:</strong> <span id="preview_titulo">{{ form_perfil.titulo.value }}</span>
+                    </div>
+                    <div class="form-field">
+                        <strong>Descrição:</strong> <div id="preview_descricao">{{ form_perfil.descricao.value }}</div>
+                    </div>
+                    <div class="form-field">
+                        <strong>Endereço:</strong> <span id="preview_endereco">{{ form_perfil.endereco.value }}</span>
+                    </div>
+                    <div class="form-field">
+                        <strong>Valor:</strong> <span id="preview_valor">{{ form_perfil.valor_sessao.value }}</span>
+                    </div>
+
+                    <div>
+                        <button type="button" onclick="gotoStep(5)">Voltar</button>
+                        <button type="submit" class="book-btn">Salvar</button>
+                    </div>
+                </div>
+
+            </form>
+
+            {% if imagens %}
+                <h3 class="section-title">Pré-visualização</h3>
+                <div class="gallery">
+                    {% for img in imagens %}
+                        <img src="{{ img.imagem.url }}" alt="Imagem {{ forloop.counter }}">
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty">Nenhuma imagem enviada ainda.</div>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+
+<script>
+// Navegação entre etapas
+const steps = Array.from(document.querySelectorAll('.step'));
+const navBtns = Array.from(document.querySelectorAll('.nav-btn'));
+let current = 0;
+
+function setActive(n){
+    steps.forEach((s,i)=> s.classList.toggle('active', i===n));
+    navBtns.forEach((b,i)=> b.classList.toggle('active', i===n));
+    current = n;
+}
+
+function gotoStep(n){
+    if(n<0||n>=steps.length) return;
+    setActive(n);
+}
+
+navBtns.forEach(btn=> btn.addEventListener('click',()=> gotoStep(parseInt(btn.dataset.step))));
+
+// Atualiza preview simples quando entrar na etapa revisar
+function updatePreview(){
+    try{
+        document.getElementById('preview_nome').textContent = (document.getElementById('id_nome')||{value:''}).value;
+        document.getElementById('preview_area').textContent = (document.getElementById('id_area_atuacao')||{value:''}).value;
+        document.getElementById('preview_titulo').textContent = (document.getElementById('id_titulo')||{value:''}).value;
+        document.getElementById('preview_descricao').textContent = (document.getElementById('id_descricao')||{value:''}).value;
+        document.getElementById('preview_endereco').textContent = (document.getElementById('id_endereco')||{value:''}).value;
+        document.getElementById('preview_valor').textContent = (document.getElementById('id_valor')||{value:''}).value;
+    }catch(e){/* ignore */}
+}
+
+// Sempre atualizar quando abrir step 6 (revisar)
+const observer = new MutationObserver(()=>{
+    if(steps[6] && steps[6].classList.contains('active')) updatePreview();
+});
+observer.observe(document.body,{attributes:true,childList:true,subtree:true});
+
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const menu = document.querySelector(".user-menu");
+    const btn = document.querySelector(".circle-btn");
+
+    if (btn) {
+        btn.addEventListener("click", () => {
+            menu.classList.toggle("active");
+        });
+
+        // Fecha quando clicar fora
+        document.addEventListener("click", (e) => {
+            if (!menu.contains(e.target)) {
+                menu.classList.remove("active");
+            }
+        });
+    }
+});
+</script>
+
 </body>
 </html>

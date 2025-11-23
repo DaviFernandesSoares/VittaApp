@@ -1,59 +1,68 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="pt-br">
-
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
-    <link rel="stylesheet" href="{% static 'css/login.css' %}">
+    <title>Login — Vitta App</title>
+    <link rel="stylesheet" href="{% static 'css/standart.css' %}">
 </head>
-
 <body>
 
-    <div class="logoFundo">
-        <img src="{% static 'img/Logo_Login.png' %}" alt="Logo">
-    </div>
+<header id="navbar" aria-hidden="true">
+   <h1> <a style="color: rgba(255,255,255,0.95);text-decoration: none; " href="{% url 'home' %}" >Vitta App</a></h1>
+</header>
 
-    <div class="wrapper">
-        <div class="form-box login">
-            <h2>Login</h2>
-            <form action="{% url 'login' %}" method="POST" id="form">
+<main class="page-container" role="main">
+    <div class="profile-card">
+        <div class="profile-main">
+
+            <h2>Entrar</h2>
+            <p class="sub">Acesse sua conta para agendar e gerenciar consultas</p>
+
+            <form action="{% url 'login' %}" method="POST" id="form" novalidate>
                 {% csrf_token %}
+
                 <div class="input-box">
-                    <span class="icon"><ion-icon name="mail-outline"></ion-icon></span>
-                    <input type="text" id="email" name="email">
-                    <label>Email</label>
-                    <div id="email-erro" class="error-tooltip"></div>
-                </div>
-                <div class="input-box">
-                    <span class="icon"><ion-icon name="lock-closed-outline"></ion-icon></span>
-                    <!-- Adicionando o ID ao campo de senha -->
-                    <input type="password" id="password" name="senha" >
-                    <label>Senha</label>
-                    <div id="senha-erro" class="error-tooltip"></div>
+                    <span class="icon" aria-hidden="true"><ion-icon name="mail-outline"></ion-icon></span>
+                    <input type="text" id="email" name="email" autocomplete="email" required aria-describedby="email-erro">
+                    <label for="email">Email</label>
+                    <div id="email-erro" class="error-tooltip" aria-live="polite"></div>
                 </div>
 
-                <!-- Show Password Container -->
+                <div class="input-box">
+                    <span class="icon" aria-hidden="true"><ion-icon name="lock-closed-outline"></ion-icon></span>
+                    <input type="password" id="password" name="senha" autocomplete="current-password" required aria-describedby="senha-erro">
+                    <label for="password">Senha</label>
+                    <div id="senha-erro" class="error-tooltip" aria-live="polite"></div>
+                </div>
+
                 <div class="show-password-container">
-                    <input type="checkbox" id="show-password">
-                    <label for="show-password">Mostrar Senha</label>
+                    <input type="checkbox" id="show-password" aria-controls="password">
+                    <label for="show-password">Mostrar senha</label>
                 </div>
 
-                <button type="submit" class="btn">Login</button>
+                <button type="submit" class="book-btn" id="submit-btn">Login</button>
 
-                 <div id="login-erro" class="error-message"></div>
+                <div id="login-erro" class="error-message" role="status" aria-live="polite"></div>
+
                 <div class="login-register">
-                    <p>Não possui uma conta?<a href="{% url 'cadastro' %}"> Registre-se</a></p><br>
-                    <p><a href="{% url 'login' %}">Esqueceu a senha?</a></p>
+                    <p>Não possui conta? <a href="{% url 'cadastro' %}" class="chip">Registre-se</a></p>
+                    <p><a href="{% url 'home' %}" class="chip">Esqueceu a senha?</a></p>
                 </div>
-        
             </form>
         </div>
-    </div>
-    <script src={% static 'js/login.js' %}></script>
-    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
-</body>
 
+        <div class="profile-aside" aria-hidden="true">
+            <!-- Espaço para ilustração, informações rápidas ou CTA secundário -->
+        </div>
+    </div>
+</main>
+
+<script src={% static 'js/login.js' %}></script>
+
+<script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+<script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+
+</body>
 </html>
