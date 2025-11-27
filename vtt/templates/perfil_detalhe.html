@@ -6,7 +6,7 @@
     <title>{{ perfil.usuario.name }} - {{ perfil.titulo }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <!-- HTMX para auto refresh do chat -->
+    <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 
     <link rel="stylesheet" href="{% static 'css/standart.css' %}">
@@ -14,7 +14,7 @@
 <body>
 
 <header id="navbar">
-    <h1> <a style="color: rgba(255,255,255,0.95);text-decoration: none; " href="{% url 'home' %}" >Vitta App</a></h1>
+    <h1> <a style="color: rgba(255,255,255,0.95);text-decoration: none;" href="{% url 'home' %}">Vitta App</a></h1>
     <nav>
     {% if not user.is_authenticated %}
         <a href="{% url 'cadastro' %}">Cadastro</a>
@@ -34,7 +34,7 @@
     <div class="nav-search">
         <input type="text" placeholder="🔍 Buscar profissional...">
     </div>
-</nav>
+    </nav>
 </header>
 
 <!-- Barra de busca principal -->
@@ -48,9 +48,11 @@
 
     <div class="profile-card">
         <div class="profile-main">
+
             <h2>{{ perfil.usuario.name }}</h2>
             <div class="sub">
-                <strong>{{ perfil.titulo }}</strong> — <span class="badge-area">{{ perfil.area_atuacao.nome|default:"Geral" }}</span>
+                <strong>{{ perfil.titulo }}</strong> —
+                <span class="badge-area">{{ perfil.area_atuacao.nome|default:"Geral" }}</span>
             </div>
 
             <div class="meta-row">
@@ -76,6 +78,37 @@
                 Média: <strong>{{ perfil.avaliacao_media|default:"5.0" }}</strong> — Número de avaliações:
                 <strong>{{ perfil.numero_avaliacoes|default:"—" }}</strong>
             </p>
+
+            <!-- ⭐ SISTEMA DE AVALIAÇÃO AQUI -->
+            <!-- BLOCO DE AVALIAÇÃO (colocar dentro do profile-main) -->
+<div class="section-title mt-4">Avalie este profissional</div>
+
+{% if user.is_authenticated %}
+  <div id="ratingBox" style="font-size:26px; cursor:pointer; margin-bottom:10px;">
+    {% for i in "12345" %}
+      <span
+        hx-post="{% url 'avaliar' perfil.id %}"
+        hx-trigger="click"
+        hx-vals='{"nota": "{{ i }}"}'
+        hx-target="#ratingResult"
+        hx-swap="outerHTML"
+        style="color:gold; display:inline-block; padding:0 4px;"
+        role="button"
+        aria-label="Avaliar {{ i }} estrelas"
+        title="Avaliar {{ i }} estrelas"
+      >★</span>
+    {% endfor %}
+  </div>
+
+  <div id="ratingResult" style="color:#444; margin-bottom:15px;">
+      Média atual: <strong>{{ perfil.avaliacao_media|default:"0.00" }}</strong> ({{ perfil.numero_avaliacoes|default:"0" }} avaliações)
+  </div>
+{% else %}
+  <p>Faça <a href="{% url 'login' %}?next={{ request.path }}">login</a> para avaliar.</p>
+{% endif %}
+
+            <!-- FIM DO BLOCO DE AVALIAÇÃO -->
+
         </div>
 
         <aside class="profile-aside">
@@ -94,14 +127,15 @@
                 <div style="margin-top:14px;">
                     <a class="book-btn" href="{% url 'conversation' perfil.id %}">Mandar mensagem</a>
                 </div>
-                    <div class="contact-item">
-                        <div>E-mail</div>
-                        <div>{{ perfil.usuario.email|default:"—" }}</div>
-                    </div>
-                    <div class="contact-item">
-                        <div>Tempo de experiência</div>
-                        <div>{{ perfil.experiencia|default:"Não informado" }}</div>
-                    </div>
+
+                <div class="contact-item">
+                    <div>E-mail</div>
+                    <div>{{ perfil.usuario.email|default:"—" }}</div>
+                </div>
+
+                <div class="contact-item">
+                    <div>Tempo de experiência</div>
+                    <div>{{ perfil.experiencia|default:"Não informado" }}</div>
                 </div>
             </div>
 
@@ -115,10 +149,7 @@
     <div style="text-align:center; margin-top:20px; color:#777;">
         <small>Voltar para <a href="{% url 'home' %}">lista de profissionais</a></small>
     </div>
-
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
     const navbar = document.getElementById('navbar');
@@ -133,6 +164,31 @@
             searchBar.classList.remove('hide');
         }
     });
+</script>
+<script>
+  // pega cookie (função padrão)
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        // Does this cookie string begin with the name we want?
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  document.body.addEventListener('htmx:configRequest', (event) => {
+    const csrftoken = getCookie('csrftoken');
+    if (csrftoken) {
+      event.detail.headers['X-CSRFToken'] = csrftoken;
+    }
+  });
 </script>
 
 </body>

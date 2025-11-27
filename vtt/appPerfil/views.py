@@ -1,6 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from .models import PerfilProfissional, ImagemPerfil
+from django.views.decorators.http import require_POST
+
+from .models import PerfilProfissional, ImagemPerfil, Avaliacao
 from .forms import PerfilProfissionalForm, ImagemPerfilForm
 from django.contrib.auth import get_user_model
 from django.db.models import Q
@@ -8,10 +10,13 @@ from django.db.models import Q
 # adicione estas importações para o chat
 from appChat.models import Message
 from django.urls import reverse
+from django.http import HttpResponse, JsonResponse
+from django.views.decorators.http import require_POST
+from .models import PerfilProfissional, Avaliacao
+from django.contrib.auth.decorators import login_required
 
-User = get_user_model()
 
-
+User = get_user_model
 def perfil_detalhe(request, cod_pp):
     perfil = get_object_or_404(PerfilProfissional, id=cod_pp)
     imagens = perfil.imagens.all()  # pega as imagens relacionadas
@@ -96,3 +101,61 @@ def criar_ou_editar_perfil(request):
         'form_imagem': form_imagem,
         'imagens': imagens_existentes
     })
+@require_POST
+def avaliar(request, cod_pp):
+    """
+    Recebe POST com 'nota' (1-5). Se for HTMX, retorna snippet HTML para #ratingResult.
+    """
+    # exige autenticação
+    if not request.user.is_authenticated:
+        if request.htmx:
+            return HttpResponse('<div id="ratingResult" style="color:#c00;">Faça login para avaliar.</div>', status=403)
+        return JsonResponse({'error': 'auth'}, status=403)
+
+    perfil = get_object_or_404(PerfilProfissional, id=cod_pp)
+
+    # pega nota — prioridade para request.POST (form encoded). hx-vals/htmx normalmente envia form params.
+    try:
+        nota = int(request.POST.get('nota', 0))
+    except (TypeError, ValueError):
+        nota = 0
+
+    if nota < 1 or nota > 5:
+        if request.htmx:
+            return HttpResponse('<div id="ratingResult" style="color:#c00;">Nota inválida.</div>', status=400)
+        return JsonResponse({'error': 'nota inválida'}, status=400)
+
+    # evita que o próprio profissional avalie a si mesmo
+    if perfil.usuario == request.user:
+        if request.htmx:
+            return HttpResponse('<div id="ratingResult" style="color:#c00;">Você não pode avaliar seu próprio perfil.</div>', status=403)
+        return JsonResponse({'error': 'self'}, status=403)
+
+    # cria ou atualiza a avaliação do usuário
+    avaliacao, created = Avaliacao.objects.update_or_create(
+        usuario=request.user,
+        perfil=perfil,
+        defaults={'nota': nota}
+    )
+
+    # recalcula média e total de avaliações
+    agg = perfil.avaliacoes.aggregate(avg=models.Avg('nota'), total=models.Count('id'))
+    media = agg['avg'] or 0
+    total = agg['total'] or 0
+
+    # salve nos campos existentes (avaliacao_media, numero_avaliacoes)
+    perfil.avaliacao_media = round(float(media), 2)
+    perfil.numero_avaliacoes = total
+    perfil.save(update_fields=['avaliacao_media', 'numero_avaliacoes'])
+
+    # resposta para HTMX -> devolve snippet HTML que substitui #ratingResult
+    if request.htmx:
+        html = f'''
+            <div id="ratingResult" style="color:#444; margin-bottom:15px;">
+                Média atual: <strong>{perfil.avaliacao_media:.2f}</strong> ({perfil.numero_avaliacoes} avaliação{"es" if perfil.numero_avaliacoes != 1 else ""})
+            </div>
+        '''
+        return HttpResponse(html)
+
+    # fallback JSON
+    return JsonResponse({'ok': True, 'media': perfil.avaliacao_media, 'total': perfil.numero_avaliacoes})

@@ -1,6 +1,9 @@
 from django.db import models
 from django.conf import settings
 
+from appUsuario.models import Usuario
+
+
 # ===========================
 # ÁREA DE ATUAÇÃO
 # ===========================
@@ -71,3 +74,14 @@ class ImagemPerfil(models.Model):
 
     def __str__(self):
         return f"Imagem de {self.perfil.usuario.username} (ordem {self.ordem})"
+# appperfil/models.py
+
+class Avaliacao(models.Model):
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
+    perfil = models.ForeignKey(PerfilProfissional, on_delete=models.CASCADE, related_name="avaliacoes")
+    nota = models.IntegerField(default=5)  # 1 a 5
+    comentario = models.TextField(blank=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('usuario', 'perfil')  # 1 avaliação por usuário

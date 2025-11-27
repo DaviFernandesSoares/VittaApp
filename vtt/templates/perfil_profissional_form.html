@@ -265,51 +265,73 @@
 </div>
 
 <script>
-// Navegação entre etapas
-const steps = Array.from(document.querySelectorAll('.step'));
-const navBtns = Array.from(document.querySelectorAll('.nav-btn'));
-let current = 0;
-
-function setActive(n){
-    steps.forEach((s,i)=> s.classList.toggle('active', i===n));
-    navBtns.forEach((b,i)=> b.classList.toggle('active', i===n));
-    current = n;
-}
-
-function gotoStep(n){
-    if(n<0||n>=steps.length) return;
-    setActive(n);
-}
-
-navBtns.forEach(btn=> btn.addEventListener('click',()=> gotoStep(parseInt(btn.dataset.step))));
-
-// Atualiza preview simples quando entrar na etapa revisar
-function updatePreview(){
-    try{
-        document.getElementById('preview_nome').textContent = (document.getElementById('id_nome')||{value:''}).value;
-        document.getElementById('preview_area').textContent = (document.getElementById('id_area_atuacao')||{value:''}).value;
-        document.getElementById('preview_titulo').textContent = (document.getElementById('id_titulo')||{value:''}).value;
-        document.getElementById('preview_descricao').textContent = (document.getElementById('id_descricao')||{value:''}).value;
-        document.getElementById('preview_endereco').textContent = (document.getElementById('id_endereco')||{value:''}).value;
-        document.getElementById('preview_valor').textContent = (document.getElementById('id_valor')||{value:''}).value;
-    }catch(e){/* ignore */}
-}
-
-// Sempre atualizar quando abrir step 6 (revisar)
-const observer = new MutationObserver(()=>{
-    if(steps[6] && steps[6].classList.contains('active')) updatePreview();
-});
-observer.observe(document.body,{attributes:true,childList:true,subtree:true});
-
-</script>
-
-<script>
 document.addEventListener("DOMContentLoaded", () => {
+    // Navegação entre etapas
+    const steps = Array.from(document.querySelectorAll('.step'));
+    const navBtns = Array.from(document.querySelectorAll('.nav-btn'));
+    let current = 0;
+
+    function setActive(n){
+        steps.forEach((s,i)=> s.classList.toggle('active', i===n));
+        navBtns.forEach((b,i)=> b.classList.toggle('active', i===n));
+        current = n;
+    }
+
+    function gotoStep(n){
+        if (typeof n !== 'number') n = parseInt(n, 10);
+        if (isNaN(n) || n<0||n>=steps.length) return;
+        setActive(n);
+
+        // atualiza preview imediatamente ao entrar na etapa 6 (Revisar)
+        if (n === 6) updatePreview();
+    }
+
+    navBtns.forEach(btn=> btn.addEventListener('click', ()=> gotoStep(Number(btn.dataset.step))));
+
+    // Atualiza preview lendo campos de forma tolerante (id ou name)
+    function readField(id, name){
+        let el = null;
+        if (id) el = document.getElementById(id);
+        if (!el && name) el = document.querySelector('[name="'+name+'"]');
+        if (!el) return '';
+        // para selects e inputs/textarea
+        return (el.options ? (el.selectedOptions[0] ? el.selectedOptions[0].textContent : el.value) : el.value) || '';
+    }
+
+    function updatePreview(){
+        try{
+            // tenta id primeiro, depois name — ajuste os nomes conforme seus fields reais
+            document.getElementById('preview_nome').textContent = readField('id_nome', 'nome');
+            document.getElementById('preview_area').textContent = readField('id_area_atuacao', 'area_atuacao');
+            document.getElementById('preview_titulo').textContent = readField('id_titulo', 'titulo');
+            document.getElementById('preview_descricao').textContent = readField('id_descricao', 'descricao');
+            document.getElementById('preview_endereco').textContent = readField('id_endereco', 'endereco');
+            document.getElementById('preview_valor').textContent = readField('id_valor', 'valor_sessao');
+        }catch(e){
+            console.warn('Erro ao atualizar preview:', e);
+        }
+    }
+
+    // Se você quiser atualizar o preview ao sair de um campo (opcional)
+    // adiciona listeners aos inputs importantes para manter o preview sempre atualizado
+    const watchNames = ['id_nome','id_area_atuacao','id_titulo','id_descricao','id_endereco','id_valor'];
+    watchNames.forEach(id=>{
+        const el = document.getElementById(id);
+        if (el){
+            el.addEventListener('input', ()=> { if (current===6) updatePreview(); });
+            el.addEventListener('change', ()=> { if (current===6) updatePreview(); });
+        }
+    });
+
+    // inicializa (garante que a etapa 0 esteja ativa)
+    setActive(0);
+
+    // menu de usuário (se existir)
     const menu = document.querySelector(".user-menu");
     const btn = document.querySelector(".circle-btn");
-
-    if (btn) {
-        btn.addEventListener("click", () => {
+    if (btn && menu) {
+        btn.addEventListener("click", (ev) => {
+            ev.stopPropagation();
             menu.classList.toggle("active");
         });
 
@@ -322,6 +344,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 </script>
+
 
 </body>
 </html>

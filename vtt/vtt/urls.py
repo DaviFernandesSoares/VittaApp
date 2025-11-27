@@ -22,6 +22,9 @@ from appUsuario.views import cadastro, login
 from appHome.views import home, logout
 from appPerfil.views import criar_ou_editar_perfil, perfil_detalhe
 from appChat.views import conversation
+
+from appPerfil.views import avaliar
+
 urlpatterns = [
     path('cadastro/', cadastro, name='cadastro'),
     path('login/', login, name='login'),
@@ -34,6 +37,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('conversation/<int:user_id>/', conversation, name='conversation'),
     path('', include('appChat.urls')),
-
+    path('avaliar/<int:cod_pp>/', avaliar, name='avaliar'),
 
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
